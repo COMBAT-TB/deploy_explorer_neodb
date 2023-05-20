@@ -1,4 +1,4 @@
-=== Deploy COMBAT-TB-Explorer and NeoDB
+### Deploy COMBAT-TB-Explorer and NeoDB
 
 Ansible roles and configuration to deploy [COMBAT TB Explorer and NeoDB](https://academic.oup.com/bioinformatics/article/36/3/982/5554700).
 
