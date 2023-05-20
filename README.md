@@ -6,4 +6,4 @@ This depends on these files (need to be put in the files/ folder) which are not 
 1. The SANBI wildcard SSL certificate (SANBI\_Wildcard.all.pem and SANBI\_Wildcard.key)
 2. The source code downloaded from [Bitbucket](https://bitbucket.org/sanbidev/combat-tb-explorer/src/master/) using the Download repository option
 
-
+The code here is available for use under the conditions specified in the LICENSE file.
