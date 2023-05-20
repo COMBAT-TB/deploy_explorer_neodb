@@ -1,0 +1,71 @@
+---
+- name: Install unzip
+  ansible.builtin.package:
+    name: unzip
+    state: present
+
+- name: Unpack Explorer code
+  ansible.builtin.unarchive:
+    copy: true
+    src: "{{explorer_src}}"
+    dest: "/home/{{ansible_user}}"
+    owner: "{{ansible_user}}"
+    creates: "/home/{{ansible_user}}/{{explorer_src|replace('.zip','')}}" 
+
+- name: Rename Explorer code
+  ansible.builtin.file:
+    src: "/home/{{ansible_user}}/{{explorer_src|replace('.zip', '')}}"
+    path: "/home/{{ansible_user}}/explorer_src"
+    state: link
+
+- name: Copy SSL cert in place
+  ansible.builtin.copy:
+    src: "{{item}}"
+    dest: "/home/{{ansible_user}}/explorer_src/docker-svc/nginx"
+  loop:
+    - SANBI_Wildcard.all.pem
+    - SANBI_Wildcard.key
+
+- name: Install jq
+  ansible.builtin.package:
+    name: jq
+    state: present
+
+- name: Save IP address
+  ansible.builtin.shell:
+    cmd: "ip --json a |jq -r '.[1]|.addr_info[0].local'"
+  register: host_ip
+
+- name: Fix hostname of explorer
+  ansible.builtin.lineinfile:
+    path: "/home/{{ansible_user}}/explorer_src/docker-compose-prod.yml"
+    line: "    extra_hosts: [\"explorer.sanbi.ac.za:{{host_ip.stdout_lines[0]}}\"]"
+    search_string: "    extra_hosts: [\"explorer.sanbi.ac.za"
+    state: present
+
+- name: Install docker-compose Python module
+  ansible.builtin.pip:
+    name: docker-compose
+    state: present
+
+- name: Start Explorer
+  community.docker.docker_compose:
+    project_src: "/home/{{ansible_user}}/explorer_src"
+    files:
+      - docker-compose-prod.yml
+    state: present
+
+- name: Install systemd unit for explorer
+  ansible.builtin.template:
+    src: docker-compose-app.service.j2
+    dest: /etc/systemd/system/docker-compose-app.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Enable systemd unit for explorer
+  ansible.builtin.systemd: 
+    name: docker-compose-app
+    daemon_reload: true
+    enabled: true
+    state: started
